@@ -1,0 +1,215 @@
+#include <xc.h>
+
+// Frecuencia del oscilador
+#define _XTAL_FREQ 4000000
+
+// CONFIGURACIÓN DEL PIC16F887
+#pragma config FOSC = INTRC_NOCLKOUT
+#pragma config WDTE = OFF
+#pragma config PWRTE = ON
+#pragma config MCLRE = ON
+#pragma config CP = OFF
+#pragma config CPD = OFF
+#pragma config BOREN = OFF
+#pragma config IESO = OFF
+#pragma config FCMEN = OFF
+#pragma config LVP = OFF
+
+// =====================================================
+// SECUENCIA 1
+// Derecha -> izquierda
+// D8 -> D7 -> D6 -> D5 -> D4 -> D3 -> D2 -> D1
+// =====================================================
+void secuencia1(void)
+{
+    PORTB = 0x01;
+    __delay_ms(500);
+
+    PORTB = 0x02;
+    __delay_ms(500);
+
+    PORTB = 0x04;
+    __delay_ms(500);
+
+    PORTB = 0x08;
+    __delay_ms(500);
+
+    PORTB = 0x10;
+    __delay_ms(500);
+
+    PORTB = 0x20;
+    __delay_ms(500);
+
+    PORTB = 0x40;
+    __delay_ms(500);
+
+    PORTB = 0x80;
+    __delay_ms(500);
+
+    PORTB = 0x00;
+}
+
+
+// =====================================================
+// SECUENCIA 2
+// Izquierda -> derecha
+// D1 -> D2 -> D3 -> D4 -> D5 -> D6 -> D7 -> D8
+// =====================================================
+void secuencia2(void)
+{
+    PORTB = 0x80;
+    __delay_ms(500);
+
+    PORTB = 0x40;
+    __delay_ms(500);
+
+    PORTB = 0x20;
+    __delay_ms(500);
+
+    PORTB = 0x10;
+    __delay_ms(500);
+
+    PORTB = 0x08;
+    __delay_ms(500);
+
+    PORTB = 0x04;
+    __delay_ms(500);
+
+    PORTB = 0x02;
+    __delay_ms(500);
+
+    PORTB = 0x01;
+    __delay_ms(500);
+
+    PORTB = 0x00;
+}
+
+
+// =====================================================
+// SECUENCIA 3
+// Centro -> extremos
+//
+// D4+D5
+// D3+D6
+// D2+D7
+// D1+D8
+// =====================================================
+void secuencia3(void)
+{
+    PORTB = 0x18;
+    __delay_ms(500);
+
+    PORTB = 0x24;
+    __delay_ms(500);
+
+    PORTB = 0x42;
+    __delay_ms(500);
+
+    PORTB = 0x81;
+    __delay_ms(500);
+
+    PORTB = 0x00;
+}
+
+
+// =====================================================
+// SECUENCIA 4
+// Extremos -> centro
+//
+// D1+D8
+// D2+D7
+// D3+D6
+// D4+D5
+// =====================================================
+void secuencia4(void)
+{
+    PORTB = 0x81;
+    __delay_ms(500);
+
+    PORTB = 0x42;
+    __delay_ms(500);
+
+    PORTB = 0x24;
+    __delay_ms(500);
+
+    PORTB = 0x18;
+    __delay_ms(500);
+
+    PORTB = 0x00;
+}
+
+
+// =====================================================
+// PROGRAMA PRINCIPAL
+// =====================================================
+void main(void)
+{
+    // Oscilador interno a 4 MHz
+    OSCCON = 0x61;
+
+    // Desactivar funciones analógicas
+    ANSEL = 0x00;
+    ANSELH = 0x00;
+
+    // PORTB como salida
+    TRISB = 0x00;
+
+    // RA2 como entrada
+    TRISA2 = 1;
+
+    // Todos los LEDs apagados
+    PORTB = 0x00;
+
+    unsigned char modo = 0;
+
+    while(1)
+    {
+        // Detectar pulsación
+        if(PORTAbits.RA2 == 1)
+        {
+            // Antirrebote
+            __delay_ms(50);
+
+            // Confirmar que sigue presionado
+            if(PORTAbits.RA2 == 1)
+            {
+                // Cambiar de secuencia
+                modo++;
+
+                if(modo > 4)
+                {
+                    modo = 1;
+                }
+
+                // Ejecutar secuencia seleccionada
+                switch(modo)
+                {
+                    case 1:
+                        secuencia1();
+                        break;
+
+                    case 2:
+                        secuencia2();
+                        break;
+
+                    case 3:
+                        secuencia3();
+                        break;
+
+                    case 4:
+                        secuencia4();
+                        break;
+                }
+
+                // Esperar a que suelten el pulsador
+                while(PORTAbits.RA2 == 1)
+                {
+                    // Esperando liberación
+                }
+
+                // Pequeño antirrebote
+                __delay_ms(50);
+            }
+        }
+    }
+}

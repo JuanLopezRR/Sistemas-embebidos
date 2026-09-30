@@ -1,0 +1,63 @@
+#include <xc.h>
+
+#define _XTAL_FREQ 4000000
+
+// CONFIGURACIÓN
+#pragma config FOSC = INTRC_NOCLKOUT
+#pragma config WDTE = OFF
+#pragma config PWRTE = ON
+#pragma config MCLRE = ON
+#pragma config CP = OFF
+#pragma config CPD = OFF
+#pragma config BOREN = OFF
+#pragma config IESO = OFF
+#pragma config FCMEN = OFF
+#pragma config LVP = OFF
+
+void main(void)
+{
+    unsigned char numero;
+    unsigned char gray;
+
+    // Oscilador interno a 4 MHz
+    OSCCON = 0x61;
+
+    // Desactivar entradas analógicas
+    ANSEL = 0x00;
+    ANSELH = 0x00;
+
+    // PORTD: LEDs
+    TRISD = 0x00;
+
+    // PORTC: 4511
+    TRISC = 0x00;
+
+    PORTD = 0x00;
+    PORTC = 0x00;
+
+    numero = 0;
+
+    while(1)
+    {
+        // Convertir número binario a código Gray
+        gray = numero ^ (numero >> 1);
+
+        // Mostrar Gray en los 4 LEDs
+        PORTD = gray & 0x0F;
+
+        // Mostrar número decimal en el 4511
+        PORTC = numero & 0x0F;
+
+        // Esperar 1 segundo
+        __delay_ms(1000);
+
+        // Siguiente número
+        numero++;
+
+        // Después del 9 volver al 0
+        if(numero > 9)
+        {
+            numero = 0;
+        }
+    }
+}
